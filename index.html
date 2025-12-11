@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chatbot Đinh Bộ Lĩnh</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: radial-gradient(circle at top left, #1d4ed8, #020617);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #facc15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1e293b;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.9);
+    }
+
+    .chat-header-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .chat-header-text p {
+      font-size: 13px;
+      color: #cbd5f5;
+    }
+
+    .chat-messages {
+      padding: 16px 20px;
+      height: 420px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 10px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: #0f172a;
+      border: 1px solid #1f2937;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #1d4ed8;
+      border-bottom-right-radius: 4px;
+    }
+
+    .time {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .chat-input-area {
+      border-top: 1px solid rgba(51, 65, 85, 0.9);
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #userInput::placeholder {
+      color: #6b7280;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #22c55e;
+      color: #022c22;
+      transition: transform 0.07s ease, box-shadow 0.07s ease, opacity 0.1s ease;
+      box-shadow: 0 8px 18px rgba(34, 197, 94, 0.35);
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.45);
+      opacity: 0.95;
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 10px rgba(34, 197, 94, 0.3);
+    }
+
+    .helper-text {
+      font-size: 11px;
+      color: #9ca3af;
+      padding: 0 20px 10px;
+    }
+
+    @media (max-width: 600px) {
+      .chat-messages {
+        height: 360px;
+      }
+      .chat-header-text h1 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="avatar">Đ</div>
+      <div class="chat-header-text">
+        <h1>Chatbot Đinh Bộ Lĩnh</h1>
+        <p>Hỏi mình về cuộc đời và công lao của vua Đinh Tiên Hoàng nhé!</p>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="helper-text">
+      Gợi ý: thử hỏi “Đinh Bộ Lĩnh là ai?”, “Ông sinh năm bao nhiêu?”, “Loạn 12 sứ quân là gì?”, “Ông mất thế nào?”, “Kinh đô ở đâu?”...
+    </div>
+
+    <div class="chat-input-area">
+      <input
+        type="text"
+        id="userInput"
+        placeholder="Gõ câu hỏi về Đinh Bộ Lĩnh rồi nhấn Enter..."
+      />
+      <button id="sendBtn">Gửi</button>
+    </div>
+  </div>
+
+  <script>
+    // ================== HỆ THỐNG KIẾN THỨC ==================
+    // Mỗi mục có: triggers (các cách hỏi khác nhau) + answer (câu trả lời)
+    const knowledgeBase = [
+      {
+        triggers: [
+          "dinh bo linh la ai",
+          "dinh tien hoang la ai",
+          "vua dinh tien hoang la ai",
+          "ong la ai",
+          "giai thich dinh bo linh"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh (sau lên ngôi xưng là Đinh Tiên Hoàng) là người sáng lập ra nhà Đinh, thống nhất đất nước sau thời kỳ loạn 12 sứ quân và đặt quốc hiệu là Đại Cồ Việt. Ông là vị vua đầu tiên xưng Hoàng đế trong lịch sử Việt Nam."
+      },
+      {
+        triggers: [
+          "dinh bo linh sinh nam",
+          "nam sinh cua dinh bo linh",
+          "ong sinh nam nao",
+          "sinh nam bao nhieu"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh sinh ngày 22 tháng 3 năm 924, quê ở vùng Gia Viễn, nay thuộc tỉnh Ninh Bình."
+      },
+      {
+        triggers: [
+          "cha cua dinh bo linh",
+          "bo cua dinh bo linh",
+          "than phu dinh bo linh"
+        ],
+        answer:
+          "Cha của Đinh Bộ Lĩnh là Đinh Công Trứ, từng làm Thứ sử Hoan Châu dưới thời nhà Ngô."
+      },
+      {
+        triggers: [
+          "me cua dinh bo linh",
+          "than mau dinh bo linh",
+          "mau than cua dinh bo linh"
+        ],
+        answer:
+          "Mẹ của Đinh Bộ Lĩnh là bà Đàm Thị, người vùng Đại Hoàng (Ninh Bình ngày nay)."
+      },
+      {
+        triggers: [
+          "dinh bo linh mat nam nao",
+          "ong mat nam nao",
+          "ong mat nam bao nhieu",
+          "ong mat khi nao",
+          "dinh tien hoang mat nam nao"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh mất vào khoảng tháng 10 năm 979, hưởng thọ khoảng 55 tuổi."
+      },
+      {
+        triggers: [
+          "que huong dinh bo linh",
+          "dinh bo linh que o dau",
+          "ong sinh o dau",
+          "que quan cua dinh bo linh"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh sinh ở thôn Kim Lư, làng Đại Hữu, châu Đại Hoàng, nay thuộc xã Gia Phương, huyện Gia Viễn, tỉnh Ninh Bình. Sau này ông gắn bó nhiều với vùng Hoa Lư – nơi trở thành kinh đô của Đại Cồ Việt."
+      },
+      {
+        triggers: [
+          "cong lao dinh bo linh",
+          "cong lao cua dinh bo linh",
+          "dinh bo linh co cong gi",
+          "vai tro cua dinh bo linh",
+          "dong gop cua dinh bo linh"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh có công lớn trong việc dẹp yên loạn 12 sứ quân, thống nhất đất nước sau thời kỳ chia cắt. Ông lập ra nhà Đinh, đặt quốc hiệu Đại Cồ Việt, xây dựng nhà nước phong kiến trung ương tập quyền bước đầu vững mạnh, mở ra thời kỳ độc lập, tự chủ bền vững cho dân tộc."
+      },
+      {
+        triggers: [
+          "loan 12 su quan la gi",
+          "12 su quan la gi",
+          "giai thich loan 12 su quan",
+          "thoi ky 12 su quan",
+          "noi ve 12 su quan"
+        ],
+        answer:
+          "Loạn 12 sứ quân là giai đoạn sau khi nhà Ngô suy yếu, đất nước bị chia cắt bởi 12 thế lực cát cứ, mỗi người xưng là sứ quân chiếm giữ một vùng. Đinh Bộ Lĩnh lần lượt đánh bại hoặc thu phục các sứ quân này, chấm dứt tình trạng phân liệt và thống nhất đất nước."
+      },
+      {
+        triggers: [
+          "dinh bo linh dong do o dau",
+          "kinh do thoi dinh bo linh",
+          "dinh tien hoang dong do o dau",
+          "kinh do dai co viet",
+          "hoa lu kinh do"
+        ],
+        answer:
+          "Sau khi lên ngôi Hoàng đế năm 968, Đinh Bộ Lĩnh chọn Hoa Lư (thuộc Ninh Bình ngày nay) làm kinh đô của nước Đại Cồ Việt. Đây là kinh đô đầu tiên của nhà nước phong kiến độc lập thời kỳ này."
+      },
+      {
+        triggers: [
+          "quoc hieu thoi dinh bo linh",
+          "dinh bo linh dat quoc hieu la gi",
+          "dat ten nuoc la gi",
+          "ten nuoc duoi thoi dinh tien hoang"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh đặt quốc hiệu là Đại Cồ Việt. Việc xưng Hoàng đế và đặt quốc hiệu khẳng định nền độc lập, tự chủ, bình đẳng với các triều đại phương Bắc."
+      },
+      {
+        triggers: [
+          "vi sao goi la nguoi mo nen chinh thong",
+          "mo nen chinh thong la gi",
+          "dinh bo linh mo nen chinh thong",
+          "nha nuoc tap quyen thoi dinh"
+        ],
+        answer:
+          "Đinh Bộ Lĩnh được coi là người mở nền chính thống vì đã xây dựng một nhà nước phong kiến trung ương tập quyền tương đối hoàn chỉnh: chia nước thành đơn vị hành chính, đặt quan chức, xây dựng triều đình, lập quân đội, định ra luật lệ và nghi lễ triều chính. Đây là nền tảng để các triều đại sau phát triển tiếp."
+      },
+      {
+        triggers: [
+          "thoi tho au cua dinh bo linh",
+          "thoi nho cua dinh bo linh",
+          "truyen co co lau dien co lau",
+          "choi co lau co lau"
+        ],
+        answer:
+          "Thời nhỏ, Đinh Bộ Lĩnh nổi tiếng với chuyện \"cờ lau tập trận\". Tương truyền, ông thường dùng cây lau làm cờ, chiêu tập trẻ chăn trâu trong làng bày trận đánh, thể hiện khí chất thủ lĩnh ngay từ khi còn nhỏ."
+      },
+      {
+        triggers: [
+          "con trai cua dinh bo linh",
+          "nguoi ke vi dinh bo linh",
+          "ai len ngoi sau dinh bo linh",
+          "dinh lien la ai"
+        ],
+        answer:
+          "Sau khi Đinh Bộ Lĩnh mất, con trai là Đinh Liễn từng được phong làm Nam Việt Vương, nhưng người lên ngôi là Đinh Toàn (Đinh Phế Đế) khi còn nhỏ. Tuy nhiên, triều Đinh nhanh chóng suy yếu, dẫn đến việc Lê Hoàn lên nắm quyền, mở ra nhà Tiền Lê."
+      },
+      {
+        triggers: [
+          "vi sao trieu dinh ket thuc",
+          "trieu dinh suy yeu",
+          "nha dinh bi thay the",
+          "vi sao le hoan len ngoi"
+        ],
+        answer:
+          "Triều Đinh kết thúc do biến cố nội bộ: Đinh Bộ Lĩnh và Đinh Liễn bị sát hại. Vua kế vị Đinh Toàn còn nhỏ, quyền lực rơi vào tay nhiếp chính là Lê Hoàn. Trước nguy cơ xâm lược từ phương Bắc và triều Đinh suy yếu, Lê Hoàn được tôn lên làm vua, lập ra nhà Tiền Lê."
+      },
+      {
+        triggers: [
+          "danh gia vai tro cua dinh bo linh",
+          "y nghia cong lao cua dinh bo linh",
+          "lich su viet nam danh gia dinh bo linh",
+          "vi sao dinh bo linh quan trong"
+        ],
+        answer:
+          "Trong lịch sử Việt Nam, Đinh Bộ Lĩnh được đánh giá là người anh hùng có công lớn trong việc thống nhất đất nước sau thời kỳ chia cắt, xây dựng nền móng cho nhà nước phong kiến độc lập. Công lao của ông đặt nền tảng cho những thắng lợi về sau như chiến thắng chống Tống thời Tiền Lê, nhà Lý, nhà Trần..."
+      },
+      {
+        triggers: [
+          "dinh bo linh nam sinh nam mat",
+          "tieu su tom tat dinh bo linh",
+          "gioi thieu ngan gon ve dinh bo linh"
+        ],
+        answer:
+          "Tóm tắt: Đinh Bộ Lĩnh (924–979), quê ở Ninh Bình, là người dẹp loạn 12 sứ quân, thống nhất đất nước, lập ra nhà Đinh và xưng Hoàng đế, đặt quốc hiệu là Đại Cồ Việt, đóng đô ở Hoa Lư. Ông là người đặt nền tảng cho nhà nước phong kiến độc lập, tự chủ của dân tộc sau nhiều thế kỷ Bắc thuộc."
+      }
+    ];
+
+    const chatMessages = document.getElementById("chatMessages");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // ================== HÀM TIỆN ÍCH XỬ LÝ VĂN BẢN ==================
+
+    // Bỏ dấu tiếng Việt + đưa về chữ thường + bỏ ký tự thừa
+    function normalizeText(str) {
+      return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // bỏ dấu
+        .replace(/[^a-z0-9\s]/g, " ")    // bỏ ký tự không phải chữ/số
+        .replace(/\s+/g, " ")            // gộp nhiều khoảng trắng
+        .trim();
+    }
+
+    // Tính độ giống nhau đơn giản dựa trên giao của tập từ
+    function similarity(a, b) {
+      const aWords = new Set(normalizeText(a).split(" "));
+      const bWords = new Set(normalizeText(b).split(" "));
+      if (aWords.size === 0 || bWords.size === 0) return 0;
+
+      let intersection = 0;
+      aWords.forEach(w => {
+        if (bWords.has(w)) intersection++;
+      });
+
+      const union = new Set([...aWords, ...bWords]).size;
+      return intersection / union; // chỉ số kiểu Jaccard
+    }
+
+    // ================== LOGIC TÌM CÂU TRẢ LỜI ==================
+
+    function getBestAnswer(userQuestion) {
+      const cleaned = normalizeText(userQuestion);
+      let bestScore = 0;
+      let bestAnswer = null;
+
+      // Duyệt qua từng mục kiến thức
+      knowledgeBase.forEach(item => {
+        item.triggers.forEach(trigger => {
+          const score = similarity(cleaned, trigger);
+          if (score > bestScore) {
+            bestScore = score;
+            bestAnswer = item.answer;
+          }
+        });
+      });
+
+      // Nếu điểm thấp quá, trả lời gợi ý
+      if (!bestAnswer || bestScore < 0.2) {
+        return (
+          "Xin lỗi, mình chưa hiểu rõ câu hỏi này 😢\n" +
+          "Bạn có thể thử hỏi lại theo cách khác, ví dụ:\n" +
+          "• “Đinh Bộ Lĩnh là ai?”\n" +
+          "• “Ông sinh năm bao nhiêu?”\n" +
+          "• “Loạn 12 sứ quân là gì?”\n" +
+          "• “Kinh đô thời Đinh ở đâu?”"
+        );
+      }
+
+      return bestAnswer;
+    }
+
+    // ================== GIAO DIỆN CHAT ==================
+
+    function addMessage(text, sender = "bot") {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+      const time = new Date().toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      msg.innerHTML = `${text}<span class="time">${time}</span>`;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleSend() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      // Thêm tin nhắn của người dùng
+      addMessage(text, "user");
+      userInput.value = "";
+
+      // Giả lập bot "suy nghĩ" một chút
+      setTimeout(() => {
+        const answer = getBestAnswer(text);
+        addMessage(answer, "bot");
+      }, 300);
+    }
+
+    sendBtn.addEventListener("click", handleSend);
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    // Tin nhắn chào mừng
+    addMessage(
+      "Xin chào! 👋\nMình là chatbot về vua Đinh Bộ Lĩnh.\nBạn hãy hỏi mình về:\n• Năm sinh, năm mất\n• Quê quán, cha mẹ\n• Công lao, vai trò lịch sử\n• Loạn 12 sứ quân\n• Kinh đô Hoa Lư, quốc hiệu Đại Cồ Việt..."
+    );
+  </script>
+</body>
+</html>
